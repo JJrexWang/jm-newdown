@@ -36,8 +36,17 @@ jobs:
           cd src-tauri
           cargo build --release 2>&1 | tail -50
       
-      - name: Upload release folder
-        uses: actions/upload-artifact@v4
+      - name: Create tarball
+        run: |
+          cd src-tauri/target/release
+          tar -czf linux.tar.gz jmcomic-downloader
+      
+      - name: Upload to Release
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          name: release
-          path: src-tauri/target/release/
+          upload_url: https://uploads.github.com/repos/JJrexWang/jm-newdown/releases/293820844/assets
+          asset_path: src-tauri/target/release/linux.tar.gz
+          asset_name: jmcomic-downloader-linux.tar.gz
+          asset_content_type: application/gzip
