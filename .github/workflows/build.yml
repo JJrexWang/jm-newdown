@@ -31,18 +31,13 @@ jobs:
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
         
-      - name: Build Tauri
+      - name: Build with Cargo
         run: |
           cd src-tauri
           cargo build --release 2>&1
       
-      - name: Check output
-        run: |
-          ls -la src-tauri/target/release/
-          file src-tauri/target/release/jmcomic-downloader
-      
-      - name: Upload Linux artifact
+      - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: jmcomic-downloader-linux
+          name: jmcomic
           path: src-tauri/target/release/jmcomic-downloader
