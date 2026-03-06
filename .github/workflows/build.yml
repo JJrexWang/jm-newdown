@@ -34,10 +34,10 @@ jobs:
       - name: Build Tauri
         run: |
           cd src-tauri
-          cargo build --release 2>&1 | tail -100
+          cargo build --release 2>&1 | tail -50
       
-      - name: Upload artifact
+      - name: Upload release folder
         uses: actions/upload-artifact@v4
         with:
-          name: jmcomic-downloader
-          path: src-tauri/target/release/jmcomic-downloader
+          name: release
+          path: src-tauri/target/release/
