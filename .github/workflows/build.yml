@@ -1,4 +1,4 @@
-name: Build
+name: Build and Release
 
 on:
   workflow_dispatch:
@@ -36,8 +36,17 @@ jobs:
           cd src-tauri
           cargo build --release 2>&1 | tail -50
       
-      - name: Upload release folder
-        uses: actions/upload-artifact@v4
+      - name: Create tarball
+        run: |
+          cd src-tauri/target/release
+          tar -czf jmcomic-downloader.tar.gz jmcomic-downloader
+      
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
         with:
-          name: release
-          path: src-tauri/target/release/
+          files: src-tauri/target/release/jmcomic-downloader.tar.gz
+          name: v0.1.0
+          body: '首次发布 - 禁漫下载器\n\n包含优化：下载整个收藏夹支持并发获取'
+          draft: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
