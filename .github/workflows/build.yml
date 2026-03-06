@@ -1,4 +1,4 @@
-name: Build and Release
+name: Build
 
 on:
   workflow_dispatch:
@@ -30,7 +30,14 @@ jobs:
       - name: Install Rust stable
         uses: dtolnay/rust-toolchain@stable
 
-      - name: Build
-        uses: tauri-apps/tauri-action@v0
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build Tauri
+        run: cd src-tauri && cargo build --release
+
+      - name: List output files
+        run: ls -la src-tauri/target/release/jmcomic-downloader
+
+      - name: Upload binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: jmcomic-downloader
+          path: src-tauri/target/release/jmcomic-downloader
