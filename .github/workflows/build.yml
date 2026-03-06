@@ -36,8 +36,11 @@ jobs:
           cd src-tauri
           cargo build --release 2>&1 | tail -100
       
-      - name: Upload artifact
+      - name: List output
+        run: ls -la src-tauri/target/release/jmcomic-downloader
+      
+      - name: Upload Linux artifact
         uses: actions/upload-artifact@v4
         with:
-          name: jmcomic-downloader
+          name: jmcomic-downloader-linux
           path: src-tauri/target/release/jmcomic-downloader
