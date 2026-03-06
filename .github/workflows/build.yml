@@ -1,4 +1,4 @@
-name: Build and Release
+name: Build
 
 on:
   workflow_dispatch:
@@ -19,10 +19,23 @@ jobs:
         with:
           node-version: 20
 
+      - name: Install pnpm
+        run: npm install -g pnpm
+
+      - name: Install frontend deps
+        run: pnpm install
+
+      - name: Build frontend
+        run: pnpm build
+
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
 
-      - name: Build
-        uses: tauri-apps/tauri-action@v0
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build Tauri
+        run: cd src-tauri && cargo build --release
+
+      - name: Upload binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: jmcomic-binary
+          path: src-tauri/target/release/jmcomic-downloader
