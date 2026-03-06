@@ -1,4 +1,4 @@
-name: Build
+name: Build and Release
 
 on:
   workflow_dispatch:
@@ -9,7 +9,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install deps
+      - name: Install dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y libssl-dev libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
@@ -19,38 +19,10 @@ jobs:
         with:
           node-version: 20
 
-      - name: Install pnpm
-        run: npm install -g pnpm
-
-      - name: Install frontend deps
-        run: pnpm install
-
-      - name: Build frontend
-        run: pnpm build
-
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
 
-      - name: Cache Cargo
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.cargo/bin/
-            ~/.cargo/@v3registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
-            src-tauri/target/
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-cargo-
-
-      - name: Build Tauri
-        run: |
-          cd src-tauri
-          cargo build --release 2>&1 | tail -50
-
-      - name: Upload release folder
-        uses: actions/upload-artifact@v4
-        with:
-          name: release
-          path: src-tauri/target/release/
+      - name: Build
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
