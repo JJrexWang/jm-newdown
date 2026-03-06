@@ -1,74 +1,43 @@
-name: Build Release
+name: Build
 
 on:
   workflow_dispatch:
 
 jobs:
-  linux:
+  build:
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
+      
       - name: Install deps
-        run: sudo apt-get update && sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf libssl-dev
-      - uses: actions/setup-node@v4
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf libssl-dev curl build-essential pkg-config
+      
+      - name: Setup Node
+        uses: actions/setup-node@v4
         with:
-          node-version: lts/*
-      - uses: dtolnay/rust-toolchain@stable
-      - uses: pnpm/action-setup@v4
-        with:
-          run_install: false
-      - run: pnpm install
-      - name: Build
-        run: cd src-tauri && cargo build --release
-      - name: Upload
+          node-version: 20
+      
+      - name: Install pnpm
+        run: npm install -g pnpm
+      
+      - name: Install frontend deps
+        run: pnpm install
+      
+      - name: Build frontend
+        run: pnpm build
+      
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        
+      - name: Build Tauri
+        run: |
+          cd src-tauri
+          cargo build --release 2>&1 | tail -100
+      
+      - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: linux-bin
+          name: jmcomic-downloader
           path: src-tauri/target/release/jmcomic-downloader
-
-  windows:
-    runs-on: windows-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: lts/*
-      - uses: dtolnay/rust-toolchain@stable
-      - uses: pnpm/action-setup@v4
-        with:
-          run_install: false
-      - run: pnpm install
-      - name: Build
-        run: cd src-tauri && cargo build --release
-      - name: Upload
-        uses: actions/upload-artifact@v4
-        with:
-          name: windows-bin
-          path: src-tauri/target/release/jmcomic-downloader.exe
-
-  macos:
-    runs-on: macos-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: lts/*
-      - uses: dtolnay/rust-toolchain@stable
-      - uses: pnpm/action-setup@v4
-        with:
-          run_install: false
-      - run: pnpm install
-      - name: Build x86_64
-        run: cd src-tauri && cargo build --release --target x86_64-apple-darwin
-      - name: Upload x86_64
-        uses: actions/upload-artifact@v4
-        with:
-          name: macos-x86_64
-          path: src-tauri/target/x86_64-apple-darwin/release/jmcomic-downloader
-      - name: Build aarch64
-        run: cd src-tauri && cargo build --release --target aarch64-apple-darwin
-      - name: Upload aarch64
-        uses: actions/upload-artifact@v4
-        with:
-          name: macos-aarch64
-          path: src-tauri/target/aarch64-apple-darwin/release/jmcomic-downloader
