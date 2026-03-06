@@ -2,27 +2,31 @@ name: Build Release
 
 on:
   workflow_dispatch:
-    inputs:
-      version:
-        description: 'Version (e.g., v0.1.0)'
-        required: true
-        default: 'v0.1.0'
 
 jobs:
-  get-version:
-    runs-on: ubuntu-latest
-    outputs:
-      VERSION: ${{ steps.get_version.outputs.VERSION }}
+  linux:
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
-      - name: Get version
-        id: get_version
-        run: echo "VERSION=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
-        env:
-          VERSION: ${{ github.event.inputs.version }}
+      - name: Install deps
+        run: sudo apt-get update && sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf libssl-dev
+      - uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: pnpm/action-setup@v4
+        with:
+          run_install: false
+      - run: pnpm install
+      - name: Build
+        run: cd src-tauri && cargo build --release
+      - name: Upload
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-bin
+          path: src-tauri/target/release/jmcomic-downloader
 
-  windows-build:
-    needs: get-version
+  windows:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
@@ -34,48 +38,37 @@ jobs:
         with:
           run_install: false
       - run: pnpm install
-      - uses: tauri-apps/tauri-action@v0
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-  linux-build:
-    needs: get-version
-    runs-on: ubuntu-22.04
-    steps:
-      - uses: actions/checkout@v4
-      - run: sudo apt-get update && sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf libssl-dev
-      - uses: actions/setup-node@v4
+      - name: Build
+        run: cd src-tauri && cargo build --release
+      - name: Upload
+        uses: actions/upload-artifact@v4
         with:
-          node-version: lts/*
-      - uses: dtolnay/rust-toolchain@stable
-      - uses: pnpm/action-setup@v4
-        with:
-          run_install: false
-      - run: pnpm install
-      - uses: tauri-apps/tauri-action@v0
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          name: windows-bin
+          path: src-tauri/target/release/jmcomic-downloader.exe
 
-  macos-build:
-    needs: get-version
+  macos:
     runs-on: macos-latest
-    strategy:
-      matrix:
-        arch: [aarch64, x86_64]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: lts/*
       - uses: dtolnay/rust-toolchain@stable
-        with:
-          targets: ${{ matrix.arch }}-apple-darwin
       - uses: pnpm/action-setup@v4
         with:
           run_install: false
       - run: pnpm install
-      - uses: tauri-apps/tauri-action@v0
+      - name: Build x86_64
+        run: cd src-tauri && cargo build --release --target x86_64-apple-darwin
+      - name: Upload x86_64
+        uses: actions/upload-artifact@v4
         with:
-          args: --target ${{ matrix.arch }}-apple-darwin
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          name: macos-x86_64
+          path: src-tauri/target/x86_64-apple-darwin/release/jmcomic-downloader
+      - name: Build aarch64
+        run: cd src-tauri && cargo build --release --target aarch64-apple-darwin
+      - name: Upload aarch64
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-aarch64
+          path: src-tauri/target/aarch64-apple-darwin/release/jmcomic-downloader
