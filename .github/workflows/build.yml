@@ -9,7 +9,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install dependencies
+      - name: Install deps
         run: |
           sudo apt-get update
           sudo apt-get install -y libssl-dev libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
@@ -17,12 +17,28 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: lts/*
+          node-version: 20
+
+      - name: Install pnpm
+        run: npm install -g pnpm
+
+      - name: Install frontend deps
+        run: pnpm install
+
+      - name: Build frontend
+        run: pnpm build
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
 
-      - name: Build
-        uses: tauri-apps/tauri-action@v0
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build Tauri
+        run: |
+          cd src-tauri
+          cargo build --release
+          ls -la release/
+
+      - name: Upload binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: jmcomic-binary
+          path: src-tauri/target/release/jmcomic-downloader
